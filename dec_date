@@ -1,0 +1,36 @@
+mon=`date | cut -c5-7`
+day=`date | cut -c8-10 | sed -e "s/ //g"`
+# decrement both month and day
+if [ $day = 1 ]
+then
+                case $mon in
+		Jan) echo "Dec 31" ;;
+		Feb) echo "Jan 31" ;; 
+		Apr) echo "Mar 31" ;;
+		May) echo "Apr 30" ;;
+		Jun) echo "May 31" ;;
+		Jul) echo "Jun 30" ;;
+		Aug) echo "Jul 31" ;;
+		Sep) echo "Aug 31" ;;
+		Oct) echo "Sep 30" ;;
+		Nov) echo "Oct 31" ;;
+		Dec) echo "Nov 30" ;;
+		# if it is March, check
+		# for leap year
+		Mar) year=`date +19%y`
+		     mod4=`expr $year % 4`
+	             if [ $mod4 = 0 ]
+		     then echo "Feb 29"
+		     else echo "Feb 28"
+		     fi
+		     ;;
+esac 
+else
+	# if it is not the first, decrement the day only
+	# with proper fixed length output formatting
+	day=`expr $day - 1`
+	if [ "$day" -lt 10 ]
+	   then echo "$mon  $day"
+	   else echo "$mon $day"
+	fi 
+fi

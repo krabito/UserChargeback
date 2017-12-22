@@ -1,0 +1,124 @@
+# Norden CAE system accounting program "acctnums",written by K. Rabito 12/8/1987.
+# Main copy is in /norden/accounting.
+# Program is the main and is executed each time a user logs in.
+# Program calls "/usr/adm/addnumber" and "/usr/adm/delnumber".
+# Program writes output to /norden/accounting/chrgstore.
+# Update on 8/1/88 by K. Rabito. Added capability to show project name.
+
+PASS="OK"
+NOCHARGE=""
+SERVER="system5"
+SYSTEM=`hostname`
+USER=`echo $HOME | sed -e "s/\/users\///"`
+CNT=0
+export CNT
+PATH=$PATH:/etc:/usr/adm
+export PATH
+
+# Test to see if a charge file exists on the fileserver,then copies it.
+
+if [ "$SYSTEM" != "$SERVER" ]
+then if test -s "/net/$SERVER/$HOME/.acctnumbers" -eq0
+	then rcp -r $SERVER:$HOME/.acctnumbers .acctnumbers
+     fi
+fi
+
+# Tests to see if the /tmp/numbers file exists. Then removes it.
+
+	if test -s /tmp/numbers
+		then rm /tmp/numbers
+	fi
+
+# Test to see if the users ".acctnumbers" file exists.
+
+	if test ! -s "$HOME"/.acctnumbers -eq0
+		then NOCHARGE="EMPTY"
+		else
+
+# Reads users charge file ".acctnumbers" in their home directory.
+clear
+echo "CAE ACCOUNTING"
+echo "##################################################################################"
+echo '   [A]DD	   [D]ELETE     SELECT CHARGE-NUMBER'
+echo "##################################################################################"
+echo
+	for numb in `cat $HOME/.acctnumbers`
+		do CNT=`expr $CNT + 1`
+		    	echo `echo "	$CNT)    $numb" | sed -e "s/_-_/   /"`
+		    echo "($CNT)_$numb" >> /tmp/numbers
+	done
+	fi
+# Test loop for proper input.
+
+	until test "$error" = "$PASS"
+		do if [ "$NOCHARGE" = "EMPTY" ]
+			then choice="A"
+			else echo
+			     echo "Choice? \c"
+		             read choice
+		   fi
+		case $choice in
+			A|a) /usr/adm/addnumber
+			     NOCHARGE=""
+			     error="FAIL"
+# Reads users charge file ".acctnumbers" in their home directory.
+	clear
+	echo "CAE ACCOUNTING"
+	echo "##################################################################################"
+	echo '   [A]DD	   [D]ELETE     SELECT CHARGE-NUMBER'
+	echo "##################################################################################"
+	echo
+	CNT=0 # Do not remove this variable.
+
+		for numb in `cat $HOME/.acctnumbers`
+			do CNT=`expr $CNT + 1`
+		    	echo `echo "	$CNT)    $numb" | sed -e "s/_-_/   /"`
+		    	echo "($CNT)_$numb" >> /tmp/numbers
+		done;;
+			D|d) /usr/adm/delnumber
+			     error="FAIL"
+# Reads users charge file ".acctnumbers" in their home directory.
+	clear
+	echo "CAE ACCOUNTING"
+	echo "##################################################################################"
+	echo '   [A]DD	   [D]ELETE     SELECT CHARGE-NUMBER'
+	echo "##################################################################################"
+	echo
+
+	CNT=0 # Do not remove this variable.
+
+		for numb in `cat $HOME/.acctnumbers`
+			do CNT=`expr $CNT + 1`
+		    	echo `echo "	$CNT)    $numb" | sed -e "s/_-_/   /"`
+		    	echo "($CNT)_$numb" >> /tmp/numbers
+		done;;
+		     [1-9]*) if [ "$choice" -gt "$CNT" ]
+			        then error="FAIL"
+			        echo ""
+			        echo "ERROR...Improper choice... Please reselect one of the above options!"
+			        echo ""
+			        else error="OK"
+		                 t=`echo "$choice"`
+			         CN=`grep "(""$t"")" /tmp/numbers | sed -e "s/_-_/ /" -e "s/^.*)_//"`
+			         rm /tmp/numbers
+		last -1 | sed -e "s/ - .*$//" -e "s/[():]/ /g" -e "s/^.*$/& $CN/" >> /norden/accounting/chrgstore
+			     fi;;
+			  *) echo ""
+			     echo "ERROR...Improper choice... Please reselect one of the above options!"
+			     echo ""
+			     error="FAIL";;
+
+		esac
+	done
+# Copies ".acctnumbers" back to the fileserver only if the system is not the fileserver.
+
+if [ "$SERVER" != "$SYSTEM" ]
+then
+rcp -r .acctnumbers $SERVER:$HOME/.acctnumbers
+rm .acctnumbers
+fi
+
+echo
+echo "Thank you!"	
+echo
+# End of script.

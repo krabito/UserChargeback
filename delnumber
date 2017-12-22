@@ -1,0 +1,71 @@
+# Norden CAE system accounting program "delnumber",written by K. Rabito 12/8/1987.
+# Copy is in /norden/accounting.
+# Program "/usr/adm/delnumber" deletes a charge number from the users charge file
+# "$HOME/.acctnumbers".
+# Updated 8/1/88 by K. Rabito. Added project name to charge number listing and added
+# 0 entry to abort the delete process.
+
+DPASS="OK"
+CNT=0 # Do not remove this variable.
+
+# Tests to see if the /tmp/numbers file exists. Then removes it.
+
+	if test -s /tmp/numbers
+		then rm /tmp/numbers
+	fi
+
+# Reads users charge file ".acctnumbers" in their home directory.
+clear
+echo "CAE ACCOUNTING"
+echo "##################################################################################"
+echo '   	  [n] DELETE NUMBER'
+echo "##################################################################################"
+echo
+	if test -s "$HOME"/.acctnumbers -eq0
+		then for numb in `cat $HOME/.acctnumbers`
+			do CNT=`expr $CNT + 1`
+		    	echo `echo "	$CNT)    $numb" | sed -e "s/_-_/   /"`
+		        echo "($CNT)_$numb" >> /tmp/numbers
+		      done
+	fi
+
+# Asks users for charge number to delete and tests to see if a null entry was made.
+echo
+echo "Select number of charge number to be deleted!"
+echo "To ABORT the delete process,enter "0"."
+echo
+until test "$DERROR" = "$DPASS"
+	do echo "Delete: \c"
+	read DEL_NUMB
+	echo
+	case "$DEL_NUMB" in
+	        [1-9]*) if [ "$DEL_NUMB" -gt "$CNT" ]
+		        then DERROR="FAIL"
+			echo ""
+			echo "ERROR...Improper choice... Please reselect one of the above options!"
+			echo ""
+		        else R=`grep "("$DEL_NUMB")" /tmp/numbers | sed -e "s/^.*)_//"`
+			grep -v "$R" $HOME/.acctnumbers > /tmp/temp
+			mv /tmp/temp $HOME/.acctnumbers
+			rm /tmp/numbers
+			DERROR="OK"
+			fi;;
+		     0) echo ""
+			echo "No charge numbers removed!"
+			echo ""
+			DERROR="OK";;
+		     *) echo ""
+			echo "ERROR...Improper choice... Please reselect one of the above options!"
+			echo ""
+			DERROR="FAIL";;
+
+		esac
+	done
+
+# Tests to see if the /tmp/numbers file exists. Then removes it.
+
+	if test -s /tmp/numbers
+		then rm /tmp/numbers
+	fi
+
+# End of script.

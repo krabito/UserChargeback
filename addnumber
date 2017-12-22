@@ -1,0 +1,69 @@
+# Norden CAE system accounting program "addnumber",written by K. Rabito 12/8/1987.
+# Main copy is in /norden/accounting.
+# Program "/usr/adm/addnumber" adds a charge number to the users charge file.
+# "$HOME/.acctnumbers".
+# Update on 8/1/88 by K. Rabito. Added project name to charge number.
+
+APASS="OK"
+CNT=0 # Do not remove this variable.
+
+# Tests to see if the /tmp/numbers file exists. Then removes it.
+
+	if test -s /tmp/numbers
+		then rm /tmp/numbers
+	fi
+
+# Reads users charge file ".acctnumbers" in their home directory.
+clear
+echo "CAE ACCOUNTING"
+echo "##################################################################################"
+echo "   	 ADD"
+echo "##################################################################################"
+echo
+	if test -s "$HOME"/.acctnumbers -eq0
+		then for numb in `cat $HOME/.acctnumbers`
+			do CNT=`expr $CNT + 1`
+		    	echo `echo "	$CNT)    $numb" | sed -e "s/_-_/   /"`
+		      done
+	fi
+
+# Asks users for charge number and tests to see if a null entry was made.
+
+echo "Enter charge number in the below format if possible!"
+echo
+echo "		XXXX-XX-XXXX-XXXXX"
+echo
+until test "$AERROR" = "$APASS"
+	do echo "Charge number: \c"
+	read CHARGE
+	echo
+	echo "Enter project name below. DO NOT USE SPACES IN THE PROJECT NAME!"
+	echo "Project name: \c"
+	read PROJECT
+	echo
+	if test -n "$CHARGE"
+		then AERROR="OK"
+			if test -n "$PROJECT"
+			then AERROR="OK"
+			else echo "Must enter a project name!"
+			AERROR="FAIL"
+		        fi
+		     else echo "Must enter a charge number!"
+		     AERROR="FAIL"
+	fi
+done
+
+# Makes entry into users ".acctnumbers" after translating all alphanumerics to upper case.
+
+	echo ""$CHARGE"_-_"$PROJECT"" > /tmp/numtemp
+	sed -e "y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/" /tmp/numtemp > /tmp/numtemp1
+	cat /tmp/numtemp1 >> $HOME/.acctnumbers
+	rm /tmp/numtemp /tmp/numtemp1
+
+# Tests to see if the /tmp/numbers file exists. Then removes it.
+
+	if test -s /tmp/numbers
+		then rm /tmp/numbers
+	fi
+
+# End of script.

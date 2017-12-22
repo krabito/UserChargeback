@@ -1,0 +1,30 @@
+# rate  correlates users with projects
+# Assigns RATE to be charged to the user
+#	day=`date | cut -c1-3`
+#	if [ "$day" = "Sat" -o "$day" = "Sun" ]
+#		then
+RATE="1.00"
+#		else RATE="0.75"
+#	fi
+# Gets charge number and assigns it to the user
+	VAR=`echo $* | sed -e  "/^.*still logged.*$/d" -e "s/ - .*$//" -e "s/:/ /g"` 
+	if [ "$1" = "root" -o "$1" = "library" ]
+		then APPEND="SYSTEM"
+		     APPEND1="CAE"
+		else APPEND=`grep "$VAR" /usr/adm/tmp/chrgstore | awk '{ print $11 }'`
+		     APPEND1=`grep "$VAR" /usr/adm/tmp/chrgstore | awk '{ print $12 }'`
+	fi
+	if [ "$APPEND" = "" ]
+		then echo "ERROR `date` " >> /usr/adm/acct.error
+		     echo "APPEND=$APPEND" >> /usr/adm/acct.error
+		     echo "$*" >> /usr/adm/acct.error
+		     echo "" >> /usr/adm/acct.error
+		else echo "" >> /usr/adm/acct.error
+		     echo $* | sed -e "/^.*still logged in.*$/d" -e "s/^.*$/& $APPEND $APPEND1 $RATE/" >> /usr/adm/yest1
+	fi
+# 
+# yest1 output:
+#                        last login           logout  total   
+#	user   tty       day mon dathr min -  hr min  hr  min  project number       project name   rate
+#	guest1 pty/ttyp1 Fri Aug 28 09 46  -  17 14   07  27   XXXX-XX-XXXX-XXXXX   wiz computer   1.00
+#       $1     $2        $3  $4  $5 $6 $7 $8  $9 $10  $11 $12       $13                  $14       $15
